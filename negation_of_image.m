@@ -1,3 +1,5 @@
+% ==== Negation of image  WITHOUT Built-in Arithmetic ====
+
 img = imread('img1.jpg');
 img = imresize(img, [256 256]);
 img = im2double(img);
