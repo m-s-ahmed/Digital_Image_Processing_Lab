@@ -1,6 +1,6 @@
 clc;
 clear;
-
+% === Log transformation  of an image WITHOUT Built-in Arithmetic ====
 % Step 1: Read the image
 img = imread('img3.jpg'); % RGB image
 

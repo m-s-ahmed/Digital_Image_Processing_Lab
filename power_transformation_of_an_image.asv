@@ -1,0 +1,38 @@
+clc;
+clear;
+
+% === Power log transformation( Gamma transformation) 
+% of an image WITHOUT Built-in Arithmetic ====
+
+% 1. Input Image (Grayscale matrix manually)
+% সাদা কালো ছবি নিলাম। কালার নিলে গ্রেতে কনভার্ট করে নিতে হবে।
+% না করেও হতে পারে , করে দেখতে হবে।
+
+img = imread('img5.jpg');
+[row, col] = size(img); % Image এর row আর column বের করা
+
+% 2. Normalize the image (0 to 1 scale)
+norm_img = double(img) / 255;  % double এ convert করে 0-1 range এ আনা
+
+% 3. Apply Power Law Transformation
+gamma = 0.4;  % তুমি চাইলে 0.4, 1.0, 2.5 ইত্যাদি নিয়ে effect দেখতে পারো
+output_img = zeros(row, col);  % output image initialize করা
+
+for i = 1:row
+    for j = 1:col
+        output_img(i,j) = norm_img(i,j) ^ gamma;
+    end
+end
+
+% 4. Convert back to 0-255
+output_img = uint8(output_img * 255);
+
+% 5. Show images
+figure;
+subplot(1,2,1);
+imshow(img);
+title('Original Image');
+
+subplot(1,2,2);
+imshow(output_img);
+title(['Power Law Enhanced (Gamma = ', num2str(gamma), ')']);
