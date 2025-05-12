@@ -1,0 +1,800 @@
+% ==== Image Addition and Subtraction WITHOUT Built-in Arithmetic ====
+
+% Step 1: ছবি পড়া
+img1 = imread('img1.jpg');
+img2 = imread('img2.jpg');
+
+% Step 2: সাইজ এক করা
+img1 = imresize(img1, [256 256]);
+img2 = imresize(img2, [256 256]);
+
+% Step 3: ডাবল টাইপে কনভার্ট
+img1 = im2double(img1);
+img2 = im2double(img2);
+
+% Step 4: ইমেজের সাইজ বের করা
+[rows, cols, channels] = size(img1);
+
+% Step 5: খালি ম্যাট্রিক্স তৈরি করা
+added_img = zeros(rows, cols, channels);
+subtracted_img = zeros(rows, cols, channels);
+
+% Step 6: পিক্সেল বাই পিক্সেল লুপ করে যোগ ও বিয়োগ
+for i = 1:rows
+    for j = 1:cols
+        for k = 1:channels
+            % Addition
+            val = img1(i,j,k) + img2(i,j,k);
+            if val > 1
+                val = 1;  % overflow নিয়ন্ত্রণ
+            end
+            added_img(i,j,k) = val;
+
+            % Subtraction
+            val = img1(i,j,k) - img2(i,j,k);
+            if val < 0
+                val = 0;  % underflow নিয়ন্ত্রণ
+            end
+            subtracted_img(i,j,k) = val;
+        end
+    end
+end
+
+% Step 7: Show all images
+figure;
+subplot(2,2,1); imshow(img1); title('Image 1');
+subplot(2,2,2); imshow(img2); title('Image 2');
+subplot(2,2,3); imshow(added_img); title('Added (Manual)');
+subplot(2,2,4); imshow(subtracted_img); title('Subtracted (Manual)');
+
+% ==== Negation of image  WITHOUT Built-in Arithmetic ====
+
+img = imread('img1.jpg');
+img = imresize(img, [256 256]);
+img = im2double(img);
+
+[rows, cols, channels] = size(img);
+neg_img = zeros(rows, cols, channels);
+
+for i = 1:rows
+    for j = 1:cols
+        for k = 1:channels
+            neg_img(i,j,k) = 1 - img(i,j,k);   % pixel-wise negate
+        end
+    end
+end
+
+figure;
+subplot(1,2,1); imshow(img); title('Original Image');
+subplot(1,2,2); imshow(neg_img); title('Negative (Manual)');
+
+
+% ==== RGB image to Gray image conversion WITHOUT Built-in Arithmetic ====
+
+img = imread('img3.jpg');
+img = imresize(img, [256 256]);
+img = im2double(img); % 0-1 scale
+
+% ==== এখানে ~ (tilde) হলো MATLAB-এর special symbol যার মানে:"এই মানটা আমি নিচ্ছি না / দরকার নেই"। ====
+% ধরো img একটা RGB ইমেজ। তাহলে:size(img) → [256 256 3] মানে:256টা row 256টা column 3টা channel (Red, Green, Blue)
+
+
+[rows, cols, ~] = size(img);
+gray_img = zeros(rows, cols);         % 1 channel grayscale
+
+for i = 1:rows
+    for j = 1:cols
+        R = img(i,j,1);
+        G = img(i,j,2);
+        B = img(i,j,3);
+        gray_img(i,j) = 0.2989*R + 0.5870*G + 0.1140*B;
+    end
+end
+
+figure;
+subplot(1,2,1); imshow(img); title('Original RGB Image');
+subplot(1,2,2); imshow(gray_img); title('Grayscale (Manual)');
+
+% ==== RGB image to Binary image conversion WITHOUT Built-in Arithmetic ====
+
+img = imread('img3.jpg');
+img = imresize(img, [256 256]);
+img = im2double(img);% 0 থেকে 1 স্কেলে আনা
+
+%এই লাইনটা পুরো ইমেজের R, G, B চ্যানেলের matrix অপারেশন করে একসাথে গ্রেস্কেল বানায়। 
+% চাইলে loop দিয়েও করা যায়, কিন্তু এটা faster & efficient
+
+gray_img = 0.2989*img(:,:,1) + 0.5870*img(:,:,2) + 0.1140*img(:,:,3);
+
+% [rows, cols, ~] = size(img);
+% gray_img = zeros(rows, cols);
+% 
+% for i = 1:rows
+%     for j = 1:cols
+%         R = img(i,j,1);
+%         G = img(i,j,2);
+%         B = img(i,j,3);
+%         gray_img(i,j) = 0.2989*R + 0.5870*G + 0.1140*B;
+%     end
+% end
+
+threshold = 0.5; % ম্যানুয়াল থ্রেশহোল্ড (চাইলে পরিবর্তন করা যায়)
+[rows, cols] = size(gray_img);
+binary_img = zeros(rows, cols);
+
+for i = 1:rows
+    for j = 1:cols
+        if gray_img(i,j) >= threshold
+            binary_img(i,j) = 1;
+        else
+            binary_img(i,j) = 0;
+        end
+    end
+end
+
+figure;
+subplot(1,3,1); imshow(img); title('Original RGB Image');
+subplot(1,3,2); imshow(gray_img); title('Grayscale Image');
+subplot(1,3,3); imshow(binary_img); title('Binary Image (Manual)');
+
+% ==== Image zooming and shrinking WITHOUT Built-in Arithmetic ====
+
+img = imread('img3.jpg');
+img = imresize(img, [256 256]);     % সাইজ ফিক্স
+img = rgb2gray(img);                % সাদাকালো করছি, যাতে 2D হয়
+img = im2double(img);               % পিক্সেল মানকে 0-1 স্কেলে আনছি
+
+%scale = 2;% স্কেল ফ্যাক্টর (Zoom in)
+scale =0.5;
+[rows, cols] = size(img);           % Original image size
+
+new_rows = round(rows * scale);     % নতুন image height
+new_cols = round(cols * scale);     % নতুন image width
+scaled_img = zeros(new_rows, new_cols);  % খালি ছবি বানালাম (সব পিক্সেল 0)
+
+for i = 1:new_rows
+    for j = 1:new_cols
+        % পুরোনো পিক্সেলের পজিশন খুঁজছি (Nearest neighbor)
+        x = round(i / scale);
+        y = round(j / scale);
+        
+        % যদি পজিশন 0 হয়ে যায়, তাহলে 1 করে দিচ্ছি (index error এড়াতে)
+        if x < 1
+            x = 1;
+        end
+        if y < 1
+            y = 1;
+        end
+        
+        % নতুন ছবির পিক্সেল মান = পুরাতন ছবির কাছাকাছি পিক্সেল
+        scaled_img(i,j) = img(x, y);
+    end
+end
+
+% ছবি দেখাচ্ছি
+figure;
+subplot(1,2,1); imshow(img); title('Original Image');
+subplot(1,2,2); imshow(scaled_img); title('Scaled Image (2x) - Manual');
+
+
+clc;
+clear;
+% === Histogram of an image WITHOUT Built-in Arithmetic ====
+
+% Step 1: Read the image (RGB)
+img = imread('img3.jpg');    % ছবিটি current folder-এ থাকতে হবে
+
+% Step 2: Manually convert to grayscale
+[rows, cols, ch] = size(img);
+gray_img = zeros(rows, cols);  % গ্রেস্কেল ইমেজ তৈরি করছি
+
+for i = 1:rows
+    for j = 1:cols
+        R = double(img(i,j,1));
+        G = double(img(i,j,2));
+        B = double(img(i,j,3));
+        gray_img(i,j) = 0.2989 * R + 0.5870 * G + 0.1140 * B;
+    end
+end
+
+gray_img = uint8(gray_img);  % আবার 0–255 scale এ আনলাম
+
+% Step 3: Calculate histogram manually
+hist_manual = zeros(1, 256);   % 256 ঘরের হিস্টোগ্রাম array
+
+for i = 1:rows
+    for j = 1:cols
+        val = gray_img(i,j);           % পিক্সেল মান (0–255)
+        hist_manual(val+1) = hist_manual(val+1) + 1;  % গুনছি
+    end
+end
+
+% Step 4: Display grayscale image
+figure;
+imshow(gray_img);
+title('Grayscale Image (Manual Conversion)');
+
+% Step 5: Display manual histogram
+figure;
+bar(0:255, hist_manual, 'b');   % বার চার্ট আঁকছি
+xlabel('Intensity Value (0–255)');
+ylabel('Pixel Count');
+title('Manual Histogram (No Built-in Function)');
+
+
+clc;
+clear;
+
+% 1. গ্রেস্কেল ছবি ইনপুট
+img = imread('cameraman.tif');
+[row, col] = size(img);
+
+% 2. Histogram গণনা করা (0-255)
+hist = zeros(1,256);  % 256টি gray level
+
+for i = 1:row
+    for j = 1:col
+        intensity = img(i,j);
+        hist(intensity+1) = hist(intensity+1) + 1;  % +1 কারণ MATLAB index 1 থেকে শুরু হয়
+    end
+end
+
+% 3. Probability Density Function (PDF) বের করা
+pdf = hist / (row * col);
+
+% 4. Cumulative Distribution Function (CDF) বের করা
+cdf = zeros(1,256);
+cdf(1) = pdf(1);
+for i = 2:256
+    cdf(i) = cdf(i-1) + pdf(i);
+end
+
+% 5. CDF কে scale করে 0-255 range-এ আনা (equalized mapping তৈরি)
+eq_map = round(cdf * 255);
+
+% 6. Equalized image তৈরি
+equalized_img = zeros(row, col, 'uint8');
+for i = 1:row
+    for j = 1:col
+        old_val = img(i,j);
+        equalized_img(i,j) = eq_map(old_val+1);
+    end
+end
+
+% 7. ছবি দেখানো
+figure;
+subplot(1,2,1);
+imshow(img);
+title('Original Image');
+
+subplot(1,2,2);
+imshow(equalized_img);
+title('Histogram Equalized Image');
+
+
+%%Histogram Equalization কী?
+→ এটি এমন একটি প্রক্রিয়া যেখানে image-এর contrast বাড়ানোর জন্য histogram কে সমানভাবে ছড়িয়ে দেওয়া হয়।
+
+Histogram কিসে বোঝায়?
+→ প্রতিটি intensity value (0-255) কতবার এসেছে সেটির frequency distribution।
+
+CDF কেন দরকার?
+→ CDF দিয়েই বুঝি কোন intensity কতটা accumulated হয়েছে। সেটাকেই আমরা mapping-এ ব্যবহার করি।
+
+Image bright হয় নাকি dark?
+→ Image এর contrast বাড়ে। Dark area উজ্জ্বল হয়, bright area কমে – সম্পূর্ণ image বেশি balanced দেখায়।
+
+এটা RGB image-এ ব্যবহার করতে পারি?
+→ হ্যাঁ, তবে প্রতিটি color channel (R, G, B) আলাদা করে process করতে হয়।
+
+
+clc;
+clear;
+% === Log transformation  of an image WITHOUT Built-in Arithmetic ====
+% Step 1: Read the image
+img = imread('img3.jpg'); % RGB image
+
+% Step 2: Manually convert to grayscale
+[rows, cols, ch] = size(img);
+gray_img = zeros(rows, cols);   % Empty grayscale image
+
+for i = 1:rows
+    for j = 1:cols
+        R = img(i,j,1);
+        G = img(i,j,2);
+        B = img(i,j,3);
+        gray_img(i,j) = 0.2989*R + 0.5870*G + 0.1140*B;
+    end
+end
+
+% Step 3: Apply log transformation manually
+log_img = zeros(rows, cols);     % Empty image for log transform
+
+max_val = max(gray_img(:));      % Maximum grayscale intensity
+c = 255 / log(1 + max_val);      % Scaling constant
+
+%এই লাইনটি scaling constant c নির্ধারণ করে, 
+% যাতে log transform করার পর pixel value-গুলো 0 থেকে 255 এর মধ্যে থাকে।
+
+for i = 1:rows
+    for j = 1:cols
+        log_img(i,j) = c * log(1 + gray_img(i,j));   % Manual log transform
+        
+        %Log function এর output অনেক সময় 255 এর নিচে বা ওপরে চলে যায়, 
+        % তাই আমরা result কে normalize করার জন্য c ব্যবহার করি।
+
+    end
+end
+
+% Step 4: Convert to uint8
+gray_img = uint8(gray_img);
+log_img = uint8(log_img);
+
+% Step 5: Display results manually
+figure;
+subplot(1,2,1);
+imshow(gray_img)
+%image(gray_img);
+%colormap(gray(256));
+axis off;
+title('Original Grayscale Image');
+
+subplot(1,2,2);
+imshow(log_img)
+%image(log_img);
+%colormap(gray(256));
+axis off;
+title('Log Transformed Image');
+
+
+clc;
+clear;
+
+% === Power log transformation(Gamma transformation) 
+% of an image WITHOUT Built-in Arithmetic ====
+
+% 1. Input Image (Grayscale matrix manually)
+% সাদা কালো ছবি নিলাম। কালার নিলে গ্রেতে কনভার্ট করে নিতে হবে।
+% না করেও হতে পারে , করে দেখতে হবে।
+
+img = imread('img5.jpg');
+[row, col] = size(img); % Image এর row আর column বের করা
+
+% 2.pixel value কে 0-1 scale এ আনা হচ্ছে
+
+norm_img = double(img) / 255;  
+
+% Power Law apply করার জন্য 
+% float number দরকার হয়, তাই double এ convert করা হয়েছে।া
+
+% 3. Apply Power Law Transformation
+%gamma = 0.4; %dark pixel গুলোর মান বাড়ে → image উজ্জ্বল হয়ে যায়. <1
+gamma=1.5; %bright pixel গুলোর মান কমে → image dark হয়ে যায় >1
+output_img = zeros(row, col);  % output image initialize করা
+
+for i = 1:row
+    for j = 1:col
+        output_img(i,j) = norm_img(i,j) ^ gamma;
+    end
+end
+
+% 4. Convert back to 0-255
+%কারণ ছবির pixel value আবার image দেখানোর জন্য 0-255 এর মধ্যে আনতে হয়।
+
+output_img = uint8(output_img * 255);
+
+% 5. Show images
+figure;
+subplot(1,2,1);
+imshow(img);
+title('Original Image');
+
+subplot(1,2,2);
+imshow(output_img);
+title(['Power Law Enhanced (Gamma = ', num2str(gamma), ')']);
+
+clc; 
+clear;
+
+% Step 1: Define original image (5x5)
+img = [100 100 100 100 100;
+       100 150 150 150 100;
+       100 150 200 150 100;
+       100 150 150 150 100;
+       100 100 100 100 100];
+
+% Step 2: Define sharpening kernel (3x3)
+kernel = [ 0 -1  0;
+          -1  5 -1;
+           0 -1  0];
+
+% Step 3: Get the size of the image and kernel
+[m, n] = size(img);
+[km, kn] = size(kernel);
+
+% Step 4: Pad the original image to handle borders (1-pixel padding)
+% Step 4: Pad the image with zero
+
+pad_size = floor(km / 2);
+padded_img = zeros(m + 2*pad_size, n + 2*pad_size);
+
+% Copy the original image into the center of padded image
+for i = 1:m
+    for j = 1:n
+        padded_img(i + pad_size, j + pad_size) = img(i, j);
+    end
+end
+
+% Step 5: Create an output image matrix
+sharpened_img = zeros(m, n);
+
+%েহেতু padding-এর কারণে padded_img এর shape বড়, তাই মূল image-এর প ্সেলগুলো kernel এর সাথে align করার জন্য এই 
+% offset (a-1, b-1) যোগ করা হচ্ছে।
+
+% Step 6: Perform convolution (manually)
+for i = 1:m
+    for j = 1:n
+        sum = 0;
+        for a = 1:km
+            for b = 1:kn
+                x = i + a - 1;
+                y = j + b - 1;
+                sum = sum + kernel(a, b) * padded_img(x, y);
+            end
+        end
+        sharpened_img(i, j) = sum;
+    end
+end
+
+% Step 7: Clamp values (0 to 255) for display
+sharpened_img = uint8(min(max(sharpened_img, 0), 255));
+img = uint8(img);
+
+% Step 8: Show results
+fprintf('Original Image:\n');
+disp(img);
+
+fprintf('Sharpened Image:\n');
+disp(sharpened_img);
+
+figure;
+subplot(1,2,1); imshow(img); title('Original Image');
+subplot(1,2,2); imshow(sharpened_img); title('Sharpened Image');
+
+%%Using builtin function
+
+%%img = imread('img3.jpg');
+%%gray_img = rgb2gray(img);  % RGB → Grayscale
+%%kernel = [0 -1 0; -1 5 -1; 0 -1 0];
+%%sharpened = conv2(double(gray_img), kernel, 'same');
+%%imshow(uint8(sharpened));
+
+
+clc;
+clear;
+
+% Step 1: Read a grayscale image
+I = imread('cameraman.tif'); % Make sure it's 8-bit grayscale
+I = double(I); % Convert to double for bitwise operation
+
+% Step 2: Initialize 8 bit planes
+[m, n] = size(I);
+bit_planes = zeros(m, n, 8); % 3D array: height x width x 8 planes
+
+% Step 3: Loop through each bit plane
+for k = 1:8
+    for i = 1:m
+        for j = 1:n
+            pixel = I(i, j);
+            % Extract k-th bit: binary shift and mod
+            bit = mod(floor(pixel / 2^(k - 1)), 2);
+            bit_planes(i, j, k) = bit * 255; % Multiply by 255 to visualize
+        end
+    end
+end
+
+% Step 4: Show all bit planes
+figure;
+for k = 1:8
+    subplot(2, 4, k);
+    imshow(uint8(bit_planes(:, :, 9-k))); % show MSB leftmost
+    title(['Bit Plane ', num2str(9-k)]);
+end
+
+
+
+clc;
+clear;
+
+% Step 1: Load grayscale image
+%I = imread('cameraman.tif');% যদি না থাকে, অন্য grayscale নাও
+I=imread('img3.jpg');
+I=0.2989*I(:,:,1) + 0.5870*I(:,:,2) + 0.1140*I(:,:,3);
+I = double(I);  % কারণ আমরা গাণিতিক কাজ করবো
+
+[m, n] = size(I);
+
+% Step 2: Define Point Detection Kernel (Laplacian)
+point_kernel = [0 -1 0; -1 4 -1; 0 -1 0];
+
+% Step 3: Define Line Detection Kernels
+line_horizontal = [-1 -1 -1; 2 2 2; -1 -1 -1];
+line_vertical   = [-1 2 -1; -1 2 -1; -1 2 -1];
+
+% Step 4: Padding image (to handle borders)
+pad_size = 1;
+padded_img = zeros(m + 2*pad_size, n + 2*pad_size);
+padded_img(2:end-1, 2:end-1) = I;
+
+% Step 5: Initialize result images
+point_img = zeros(m, n);
+line_h_img = zeros(m, n);
+line_v_img = zeros(m, n);
+
+% Step 6: Convolution manually
+for i = 2 : m+1
+    for j = 2 : n+1
+        region = padded_img(i-1:i+1, j-1:j+1);
+        
+        % Point detection
+        value1 = sum(sum(region .* point_kernel));
+        point_img(i-1, j-1) = value1;
+
+        % Horizontal line detection
+        value2 = sum(sum(region .* line_horizontal));
+        line_h_img(i-1, j-1) = value2;
+
+        % Vertical line detection
+        value3 = sum(sum(region .* line_vertical));
+        line_v_img(i-1, j-1) = value3;
+    end
+end
+
+% Step 7: Display the results
+subplot(2,2,1); imshow(uint8(I)); title('Original Image');
+subplot(2,2,2); imshow(uint8(abs(point_img))); title('Point Detection');
+subplot(2,2,3); imshow(uint8(abs(line_h_img))); title('Horizontal Lines');
+subplot(2,2,4); imshow(uint8(abs(line_v_img))); title('Vertical Lines');
+
+
+
+clc;
+clear;
+close all;
+
+% Read the image
+image = imread('IMG-20220420-WA0000.jpg'); % Replace with your image file
+
+% Convert to grayscale if it's a color image
+if size(image, 3) == 3
+    image = rgb2gray(image);
+end
+
+% Get the size of the image
+[m, n] = size(image);
+
+% Define a 3x3 averaging filter
+filter = ones(3, 3) / 9;  
+
+% Initialize output image
+smoothed_image = zeros(m, n);
+
+% Apply the filter manually
+for i = 2:m-1
+    for j = 2:n-1
+        % Extract the 3x3 region
+        region = double(image(i-1:i+1, j-1:j+1));
+        
+        % Perform element-wise multiplication and sum
+        smoothed_value = sum(sum(region .* filter));
+        
+        % Assign new value to the output image
+        smoothed_image(i, j) = smoothed_value;
+    end
+end
+
+% Convert back to uint8
+smoothed_image = uint8(smoothed_image);
+
+% Display the results
+figure;
+subplot(1,2,1);
+imshow(image);
+title('Original Image');
+
+subplot(1,2,2);
+imshow(smoothed_image);
+title('Smoothed Image');
+
+
+********python*****************
+# -*- coding: utf-8 -*-
+"""dip.ipynb
+
+Automatically generated by Colab.
+
+Original file is located at
+    https://colab.research.google.com/drive/1bn8BemQdYpZdVr_y3mo5Wh6t57vERwfY
+"""
+
+#Task 1: Load and Preprocess Image
+
+#These lines import the necessary libraries:
+#cv2 is OpenCV, used for image processing.
+#numpy (imported as np) is used for numerical operations, often with arrays.
+#matplotlib.pyplot (as plt) is used for plotting and displaying images or graphs.
+
+#This line loads an image file named 'your_image.jpg' in grayscale mode (black and white).
+#cv2.IMREAD_GRAYSCALE tells OpenCV to ignore color and just load intensity values (0 to 255).
+
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load the image in grayscale
+image = cv2.imread('dip.jpg', cv2.IMREAD_GRAYSCALE)
+
+# Resize the image to 256x256 for simplicity
+image = cv2.resize(image, (256, 256))
+
+# Display the original image
+plt.imshow(image, cmap='gray')
+plt.title('Original Grayscale Image')
+plt.axis('off')
+plt.show()
+
+#Task 2: Apply Fourier Transform and Show the Fourier Spectrum
+
+#Steps:
+#Use np.fft.fft2 to compute the 2D Fourier Transform.
+#Shift the zero-frequency component to the center using np.fft.fftshift.
+
+#Explanation:
+#The Fourier Transform converts the image from the spatial domain to the frequency domain.
+#The magnitude spectrum shows the frequency content: bright spots represent dominant frequencies.
+
+# Compute the 2D Fourier Transform
+f_transform = np.fft.fft2(image)
+f_shift = np.fft.fftshift(f_transform)
+
+# Compute the magnitude spectrum (log scale for visualization)
+
+#np.abs(f_shift) gives the magnitude (ignoring phase) of the complex Fourier values.
+#We add +1 to avoid taking log of 0.
+#Multiplying by 20 scales the values for better visibility (this is common in signal processing).
+#This gives a more viewable magnitude spectrum, highlighting the strength of various frequency components.
+
+magnitude_spectrum = 20 * np.log(np.abs(f_shift) + 1)
+
+# Display the Fourier spectrum
+plt.imshow(magnitude_spectrum, cmap='gray')
+plt.title('Fourier Spectrum')
+plt.axis('off')
+plt.show()
+
+#Task 3: Implement Frequency Domain Filters
+
+#(A) Notch Filter
+
+#A notch filter removes specific frequencies (e.g., to remove periodic noise).
+
+# Dimensions of the image
+
+#Gets the dimensions of the image.
+#Calculates the center coordinates (crow, ccol) of the image — this is where the low frequencies are located after the fftshift
+
+rows, cols = image.shape
+crow, ccol = rows // 2, cols // 2
+
+#Creates a notch filter — a mask that allows most frequencies to pass except a small region at the center.
+#notch_filter is initialized to all ones (i.e., let all frequencies pass).
+#A square of zeros is set at the center to block low frequencies in a 20×20 area (10 pixels in all directions).
+#This filter suppresses a small region in the frequency spectrum (often useful for removing periodic noise or unwanted patterns).
+
+# Create a notch filter (block a specific frequency)
+notch_filter = np.ones((rows, cols), np.float32)
+notch_radius = 10
+notch_filter[crow-notch_radius:crow+notch_radius, ccol-notch_radius:ccol+notch_radius] = 0
+
+# Apply the notch filter
+#Multiplies the shifted Fourier spectrum with the notch filter.
+#Effectively removes (zeroes out) the blocked frequencies.
+f_shift_notch = f_shift * notch_filter
+
+# Inverse Fourier Transform
+#ifftshift reverts the shift done earlier to prepare for inverse FFT.
+#ifft2 performs the Inverse Fourier Transform, converting the image back to the spatial domain.
+
+f_ishift_notch = np.fft.ifftshift(f_shift_notch)
+img_notch = np.fft.ifft2(f_ishift_notch)
+img_notch = np.abs(img_notch)
+
+# Display the result
+plt.imshow(img_notch, cmap='gray')
+plt.title('Notch Filter Result')
+plt.axis('off')
+plt.show()
+
+#Notch Filter:
+#Removes specific frequencies. If your image has periodic noise (e.g., horizontal/vertical lines),
+#the notch filter will suppress those patterns. The image may look cleaner but might lose some details if the notched frequency corresponds to important features.
+
+#Low-pass Filter:
+
+#Ideal: Blurs the image by removing high-frequency components (edges/details). It can cause ringing artifacts due to its sharp cutoff.
+#Gaussian: Also blurs the image but with a smoother transition, avoiding ringing artifacts. The image appears more naturally blurred.
+
+# Radius for the low-pass filter
+D0 = 30  # Cutoff frequency
+
+# Ideal Low-pass Filter
+lowpass_ideal = np.zeros((rows, cols), np.float32)
+for i in range(rows):
+    for j in range(cols):
+      #is used to calculate the distance between two points in a 2D plane — specifically:
+      #The distance from point(i,j) to the center point (𝑐𝑟𝑜𝑤,𝑐𝑐𝑜𝑙)(crow,ccol) of the image.
+        D = np.sqrt((i - crow)**2 + (j - ccol)**2)
+        if D <= D0:
+            lowpass_ideal[i, j] = 1
+
+            #Creates an Ideal Low-Pass Filter: a sharp circular mask that passes only frequencies inside radius D0.
+            #Pixels outside this circle are 0 (blocked); inside are 1 (passed).
+            #This produces a clear cutoff, but can cause artifacts like ringing in the output image.
+
+# Gaussian Low-pass Filter
+lowpass_gaussian = np.zeros((rows, cols), np.float32)
+for i in range(rows):
+    for j in range(cols):
+        D = np.sqrt((i - crow)**2 + (j - ccol)**2)
+        lowpass_gaussian[i, j] = np.exp(-(D**2) / (2 * (D0**2)))
+
+        #Creates a Gaussian Low-Pass Filter: a smooth circular mask with a gradual fall-off.
+        #Values decrease smoothly from 1 at the center to near 0 at the edges.
+        #It’s softer and avoids artifacts, making it visually more natural.
+
+# Apply the filters
+f_shift_lowpass_ideal = f_shift * lowpass_ideal
+f_shift_lowpass_gaussian = f_shift * lowpass_gaussian
+
+# Inverse Fourier Transform for both
+f_ishift_lowpass_ideal = np.fft.ifftshift(f_shift_lowpass_ideal)
+img_lowpass_ideal = np.abs(np.fft.ifft2(f_ishift_lowpass_ideal))
+
+f_ishift_lowpass_gaussian = np.fft.ifftshift(f_shift_lowpass_gaussian)
+img_lowpass_gaussian = np.abs(np.fft.ifft2(f_ishift_lowpass_gaussian))
+
+# Display the results
+plt.subplot(121), plt.imshow(img_lowpass_ideal, cmap='gray'), plt.title('Ideal Low-pass')
+plt.axis('off')
+plt.subplot(122), plt.imshow(img_lowpass_gaussian, cmap='gray'), plt.title('Gaussian Low-pass')
+plt.axis('off')
+plt.show()
+
+#High-pass Filter:
+
+#Ideal: Enhances edges and details by removing low frequencies. The image looks like an edge map, with smooth areas darkened.
+#Gaussian: Similar to the ideal high-pass but with a smoother transition, resulting in less harsh edge enhancement.
+
+# Ideal High-pass Filter (1 - Low-pass)
+highpass_ideal = 1 - lowpass_ideal
+
+# Gaussian High-pass Filter (1 - Gaussian Low-pass)
+highpass_gaussian = 1 - lowpass_gaussian
+
+# Apply the filters
+f_shift_highpass_ideal = f_shift * highpass_ideal
+f_shift_highpass_gaussian = f_shift * highpass_gaussian
+
+# Inverse Fourier Transform for both
+f_ishift_highpass_ideal = np.fft.ifftshift(f_shift_highpass_ideal)
+img_highpass_ideal = np.abs(np.fft.ifft2(f_ishift_highpass_ideal))
+
+f_ishift_highpass_gaussian = np.fft.ifftshift(f_shift_highpass_gaussian)
+img_highpass_gaussian = np.abs(np.fft.ifft2(f_ishift_highpass_gaussian))
+
+# Display the results
+plt.subplot(121), plt.imshow(img_highpass_ideal, cmap='gray'), plt.title('Ideal High-pass')
+plt.axis('off')
+plt.subplot(122), plt.imshow(img_highpass_gaussian, cmap='gray'), plt.title('Gaussian High-pass')
+plt.axis('off')
+plt.show()
